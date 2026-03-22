@@ -92,6 +92,23 @@ h2 {
   font-size: 1.35rem;
 }
 
+.load-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(185, 28, 28, 0.35);
+  background: rgba(254, 226, 226, 0.65);
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+body.theme-dark .load-error {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.35);
+  color: #fecaca;
+}
+
 ul#messages {
   list-style: none;
   padding: 0;
@@ -130,7 +147,9 @@ label {
   font-size: 0.95rem;
 }
 
-input#messageInput {
+input#messageInput,
+input#apiBase,
+input#pseudoInput {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
@@ -140,11 +159,15 @@ input#messageInput {
   outline: none;
 }
 
-input#messageInput::placeholder {
+input#messageInput::placeholder,
+input#apiBase::placeholder,
+input#pseudoInput::placeholder {
   color: var(--muted);
 }
 
-input#messageInput:focus {
+input#messageInput:focus,
+input#apiBase:focus,
+input#pseudoInput:focus {
   border-color: rgba(43, 108, 176, 0.55);
   box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.18);
 }

@@ -1,6 +1,5 @@
-
 // --------------------
-// 3.1 - Factorielle
+// 3.1 - Factorielle (TP client — conservé)
 // --------------------
 
 function fact(n) {
@@ -13,69 +12,60 @@ function fact(n) {
 }
 
 function applique(tab, f) {
-  // Applique f a chaque element et renvoie les resultats (meme taille).
   return tab.map((x) => f(x));
 }
 
 console.log("Factorielle de 6 =", fact(6));
 
-// Exemple avec `applique` et la fonction `fact`
 const tab = [0, 1, 2, 3, 4, 5];
 console.log("Factorielle de [0..5] =", applique(tab, fact));
 
-// Exemple avec `applique` et une fonction anonyme
 console.log("Carres de [0..5] =", applique([0, 1, 2, 3, 4, 5], (x) => x * x));
 
 // --------------------
-// 3.2/3.3 - Messages 
+// §3 — Connexion au micro-service (fetch)
+// Voir : https://wdi.centralesupelec.fr/appliouaibe/TD3Apart2
 // --------------------
 
 const messagesList = document.getElementById("messages");
 const messageForm = document.getElementById("messageForm");
 const messageInput = document.getElementById("messageInput");
 const sendButton = document.getElementById("sendButton");
+const apiBaseInput = document.getElementById("apiBase");
+const pseudoInput = document.getElementById("pseudoInput");
+const loadErrorEl = document.getElementById("loadError");
 
 if (!messagesList || !messageForm || !messageInput || !sendButton) {
-  // Evite les erreurs si le HTML change.
-  console.warn(
-    "Elements manquants dans le DOM: verifier les ids dans index.html"
-  );
+  console.warn("Elements manquants dans le DOM: verifier index.html");
 }
 
-// `msgs` peut etre:
-// - un tableau de strings (cas 3.2)
-// - ou un tableau d'objets { pseudo, date, text } (cas 3.3)
-// Pour satisfaire 3.3, on initialise directement au format objet.
-let msgs = [
-  {
-    pseudo: "Alice",
-    date: "20/03/2026 10:00",
-    text: "Message 1 : Bonjour !",
-  },
-  {
-    pseudo: "Bob",
-    date: "20/03/2026 10:05",
-    text: "Message 2 : Comment ca va ?",
-  },
-  {
-    pseudo: "Charly",
-    date: "20/03/2026 10:12",
-    text: "Message 3 : Ceci est un exemple.",
-  },
-  {
-    pseudo: "Dana",
-    date: "20/03/2026 10:20",
-    text: "Message 4 : Dernier detail avant le JS.",
-  },
-  {
-    pseudo: "Eve",
-    date: "20/03/2026 10:30",
-    text: "Message 5 : A vous de jouer !",
-  },
-];
+/** Base URL du serveur (§3.4 : champ paramétrable) */
+function getBaseUrl() {
+  const raw = apiBaseInput?.value?.trim();
+  if (raw) return raw.replace(/\/$/, "");
+
+  if (typeof location !== "undefined" && location.origin && location.origin !== "null") {
+    return location.origin;
+  }
+
+  return "http://localhost:8080";
+}
+
+function setLoadError(msg) {
+  if (!loadErrorEl) return;
+  if (!msg) {
+    loadErrorEl.hidden = true;
+    loadErrorEl.textContent = "";
+    return;
+  }
+  loadErrorEl.hidden = false;
+  loadErrorEl.textContent = msg;
+}
+
+/** Données affichées (synchronisées avec le serveur après chargement) */
+let msgs = [];
 
 function renderMessage(li, msg) {
-  // Supporte strings (3.2) et objets (3.3)
   if (typeof msg === "string") {
     li.textContent = msg;
     return;
@@ -91,10 +81,8 @@ function renderMessage(li, msg) {
 function update(list) {
   if (!messagesList) return;
 
-  // Efface la liste
   messagesList.innerHTML = "";
 
-  // Cree un nouvel <li> pour chaque element
   list.forEach((msg) => {
     const li = document.createElement("li");
     renderMessage(li, msg);
@@ -102,24 +90,68 @@ function update(list) {
   });
 }
 
-// Affichage initial
-update(msgs);
+/**
+ * §3.2 — Peupler la liste depuis GET /msg/getAll
+ */
+async function loadMessages() {
+  const base = getBaseUrl();
+  setLoadError("");
 
-// 3.3 - Bouton "Mise a jour" (re-render uniquement)
+  try {
+    const res = await fetch(`${base}/msg/getAll`);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+
+    msgs = (Array.isArray(data) ? data : []).map((m) => {
+      if (typeof m === "string") {
+        return { text: m, pseudo: "", date: "" };
+      }
+      return {
+        text: m?.text ?? "",
+        pseudo: m?.pseudo ?? "Anonyme",
+        date: m?.date ?? "",
+      };
+    });
+
+    window.msgs = msgs;
+    update(msgs);
+  } catch (e) {
+    console.error("loadMessages:", e);
+    setLoadError(
+      `Impossible de charger les messages (${base}). Lance le serveur (npm start dans ServerSide) ou vérifie l’URL.`
+    );
+  }
+}
+
+// Affichage initial depuis le micro-service
+loadMessages();
+
+/*
+ * §3.1 — Exemple du sujet : premier message dans une alerte (décommenter pour tester)
+ *
+ * fetch(`${getBaseUrl()}/msg/getAll`)
+ *   .then((r) => r.json())
+ *   .then((arr) => alert(arr[0]?.text ?? ""));
+ */
+
+// Bouton "Mise à jour" : recharger depuis le serveur
 const updateButton = document.createElement("button");
 updateButton.type = "button";
 updateButton.id = "updateButton";
-updateButton.textContent = "Mise a jour";
-updateButton.style.marginTop = "10px";
+updateButton.textContent = "Mise à jour";
 
-const posterSection = messageForm.closest("section") || messageForm.parentElement;
+const posterSection = messageForm?.closest("section") || messageForm?.parentElement;
 if (posterSection && !posterSection.querySelector("#updateButton")) {
   posterSection.appendChild(updateButton);
 }
 
-updateButton.addEventListener("click", () => update(msgs));
+updateButton.addEventListener("click", () => {
+  loadMessages();
+});
 
-// 3.3 - Theme clair/sombre (bouton en haut a droite du header)
+// Thème clair / sombre
 const themeToggleButton = document.createElement("button");
 themeToggleButton.type = "button";
 themeToggleButton.id = "themeToggleButton";
@@ -136,38 +168,36 @@ themeToggleButton.addEventListener("click", () => {
   themeToggleButton.textContent = isDark ? "Mode clair" : "Mode sombre";
 });
 
-// 3.2/3.3 - Action sur le bouton principal:
-// - si l'utilisateur ecrit quelque chose, on ajoute un nouveau message (pseudo + date)
-// - sinon, on se contente de re-render pour tester la variable `msgs` (3.2)
-function demanderPseudo() {
-  const p = prompt("Quel pseudo pour ce message ?", "Anonyme");
-  const pseudo = (p ?? "").trim();
-  return pseudo.length ? pseudo : "Anonyme";
-}
-
-messageForm.addEventListener("submit", (e) => {
+/**
+ * §3.3 — Poster via GET /msg/post/:msg?pseudo=...
+ * puis rafraîchir la liste.
+ */
+messageForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const value = messageInput.value.trim();
+  if (!value) return;
 
-  if (value.length > 0) {
-    // Nouveau message associe a un pseudo + date.
-    const nouveau = {
-      pseudo: demanderPseudo(),
-      date: new Date().toLocaleString(),
-      text: value,
-    };
-    msgs = [...msgs, nouveau];
+  const base = getBaseUrl();
+  const pseudo =
+    (pseudoInput?.value ?? "").trim() || "Anonyme";
+
+  const url = `${base}/msg/post/${encodeURIComponent(value)}?pseudo=${encodeURIComponent(
+    pseudo
+  )}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await res.json();
     messageInput.value = "";
+    await loadMessages();
+  } catch (err) {
+    console.error("post message:", err);
+    setLoadError(`Échec de l’envoi vers ${base}.`);
   }
-
-  // Toujours re-render (permet de valider 3.2 aussi en modifiant `msgs` dans la console)
-  update(msgs);
 });
 
-// Bonus: si jamais quelqu'un clique le bouton sans passer par submit, on garde la cohérence.
 sendButton.addEventListener("click", () => {
-  if (!messageForm) return;
-  // Le submit listener fera deja update(msgs).
+  // le submit gère l’envoi
 });
-

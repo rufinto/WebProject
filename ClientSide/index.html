@@ -15,20 +15,30 @@
     <main>
       <section aria-labelledby="messages-title">
         <h2 id="messages-title">Messages</h2>
-        <ul id="messages">
-          <li>Message 1 : Bonjour !</li>
-          <li>Message 2 : Comment ca va ?</li>
-          <li>Message 3 : Ceci est un exemple.</li>
-          <li>Message 4 : Dernier detail avant le JS.</li>
-          <li>Message 5 : A vous de jouer !</li>
-        </ul>
+        <p id="loadError" class="load-error" hidden></p>
+        <ul id="messages"></ul>
       </section>
 
       <section aria-labelledby="poster-title">
         <h2 id="poster-title">Poster un message</h2>
         <form id="messageForm">
+          <label for="apiBase">URL du micro-service (optionnel)</label>
+          <input
+            id="apiBase"
+            name="apiBase"
+            type="url"
+            placeholder="Vide = même origine (ex. http://localhost:8080)"
+          />
+          <label for="pseudoInput">Pseudo</label>
+          <input
+            id="pseudoInput"
+            name="pseudo"
+            type="text"
+            placeholder="Anonyme"
+            autocomplete="nickname"
+          />
           <label for="messageInput">Votre message</label>
-          <input id="messageInput" name="message" type="text" />
+          <input id="messageInput" name="message" type="text" required />
           <button id="sendButton" type="submit">Envoyer</button>
         </form>
       </section>
@@ -37,4 +47,3 @@
     <script src="script.js" defer></script>
   </body>
 </html>
-
