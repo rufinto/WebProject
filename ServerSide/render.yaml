@@ -1,0 +1,14 @@
+# Blueprint Render (optionnel) — ajuster `rootDir` selon l’emplacement du dossier ServerSide dans ton dépôt
+# Doc : https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: message-board-td3a
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "18"
